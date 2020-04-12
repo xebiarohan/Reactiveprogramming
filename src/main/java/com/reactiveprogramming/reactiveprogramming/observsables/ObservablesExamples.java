@@ -62,6 +62,15 @@ public class ObservablesExamples {
                 });
         evenNumbers.stream().forEach(x -> System.out.println("EVEN NUMBER " + x));
         oddNumbers.stream().forEach(x -> System.out.println("ODD NUMBER "+ x));
+
+
+        //  Empty Observable
+                Observable.empty();
+
+        //  ConditionalOperator
+        Observable.empty()
+                .defaultIfEmpty(2)
+                .subscribe(x -> System.out.println(x));
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
