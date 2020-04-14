@@ -116,7 +116,6 @@ public class ObservablesExamples {
         subject.onNext(10);
         subject.subscribe(y -> System.out.println("value of second Observable " + y));
 
-
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
