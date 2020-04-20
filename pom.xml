@@ -45,6 +45,13 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.springframework/spring-web-reactive -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web-reactive</artifactId>
+			<version>5.0.0.M4</version>
+		</dependency>
+
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-test</artifactId>
