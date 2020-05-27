@@ -44,7 +44,10 @@ lets discuss them 1 by 1
 		</dependency>
 ```
 
-### Creating Flux
+## Flux
+Flux can publish 0 or more values. It can of any type.
+
+### Ways to create Flux
 
 #### 1. Flux.just()
 Use this method when we have to pass comma seperated values.
@@ -85,4 +88,74 @@ This method emita long values staring from 0 in given duration
 ```java
  Flux.interval(Duration.ofMillis(1000));
 ```
+These are the most common used flux creation methods. There are few more like fromArray, fromStream, create etc
 
+### Subsribing Flux publisher
+When we subscribe to any publisher. We can get 1 of three results 
+1 response
+2 error
+3 complete indication
+
+And a subscriber has 3 methods 
+
+onNext()
+onError()
+onComplete()
+
+So when we get a response object, onNext method gets triggered. when we get an error OnError() method got triggered.when complete indicator comes onComplete() method get called.
+
+OnError and onComplete are terminator methods means once they get called, the subscription ends.
+```java
+        Flux<Integer> integerFlux = Flux.just(1,2,3,4);
+        integerFlux.subscribe(
+                System.out::println,
+                error -> System.out.println("Error : " + error),
+                () -> System.out.println("Subscription completed")
+        );
+```
+Here in the subscribe 3 statements are representing these 3 methods : onNext, onError and onComplete
+
+
+### intermittent functions 
+
+#### 1. buffer
+We can use it in 2 ways : 1st with buffer size and 2nd with time span
+
+In case of buffer size we can set the exact values which we want to emit at 1 time.
+```java
+Flux<Integer> integerFlux = Flux.just(1,2,3,4);
+integerFlux.buffer(2).subscribe(x-> System.out.println(x));   // [[1, 2], [3, 4]]
+```
+
+Here we defined buffer equal to 2. So it keeps adding values in buffer and only emit when it reached the buffer size.
+
+In case of buffer duration, publisher publishes values in every specified time duration
+```java
+Flux<Integer> integerFlux = Flux.just(1,2,3,4);
+integerFlux.buffer(2).buffer(Duration.ofMillis(5000)).subscribe(x-> System.out.println(x));  // [1,2,3,4]
+```
+It will emit all the values in 1 go because before 5000 ms it added all the values in buffer. If suppose we are getting these values from some slow database and able to get only 2 values in 5000 ms then it will also publish values like
+```java
+// [[1, 2], [3, 4]]
+```
+
+#### blockFirst()
+This method subscribes to the flux and returns the first element or null if no value is present. This is usually used for testing
+```java
+AtomicLong cancelCount = new AtomicLong();
+  Flux.range(1, 10)
+    .doOnCancel(cancelCount::incrementAndGet)
+    .blockFirst();
+  assertThat(cancelCount.get()).isEqualTo(1);
+```
+
+#### blockLast()
+This method subscribes to the flux and returns the last element or null if no value is present. This is also usually used for testing
+
+```java
+AtomicLong cancelCount = new AtomicLong();
+  Flux.range(1, 10)
+    .doOnCancel(cancelCount::incrementAndGet)
+    .blockFirst();
+  assertThat(cancelCount.get()).isEqualTo(10);
+```
