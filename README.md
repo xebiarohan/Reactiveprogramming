@@ -3,7 +3,7 @@
 ### What is Reactive programming ?
 In plain terms reactive programming is about non-blocking applications that are asynchronous and event-driven and require a small number of threads to scale vertically (i.e. within the JVM) rather than horizontally (i.e. through clustering).
 
-Dont worry if you didn't get  it. Will describe it with examples. keep reading....
+Dont worry if you didn't get  it. keep reading....
 
 ### Why we need Reactive programming?
 
@@ -47,7 +47,7 @@ lets discuss them 1 by 1
 ## Flux
 Flux can publish 0 or more values. It can of any type.
 
-### Ways to create Flux
+### Flux creation methods
 
 #### 1. Flux.just()
 Use this method when we have to pass comma seperated values.
@@ -90,31 +90,92 @@ This method emita long values staring from 0 in given duration
 ```
 These are the most common used flux creation methods. There are few more like fromArray, fromStream, create etc
 
-### Subsribing Flux publisher
-When we subscribe to any publisher. We can get 1 of three results 
+### Mono creation methods
+
+#### Mono.just()
+Just like we have this method in Flux we have just() method in *Mono*. The only difference is we can pass only 1 value to it
+```java
+Mono<Integer> mono = Mono.just(1);
+```
+
+#### Mono.empty()
+Same as Flux this method is used to create empty Mono. Usually comes when we dont want to return null, we can return empty Mono.
+```java
+Mono<Object> empty = Mono.empty();
+```
+#### Mono.error()
+It will publish exception.
+```java
+Mono<Object> exception = Mono.error(new Exception("Something went wrong"));
+```
+
+#### Mono.from()
+This is used to create a new publisher from existing one
+```java
+ Flux<Integer> primaryFlux = Flux.just(1, 2, 3, 4);
+ Mono<Integer> mono = Mono.from(primaryFlux);
+```
+
+#### Mono.justOrEmpty()
+This method can take Optional value or direct value. 
+In case of optional value it will return value if Optional is not null else only emit onComplete
+In case of direct value it will return the value or emit onComplete if null is passed
+```java
+ Mono<Object> justOrEmptyMono1 = Mono.justOrEmpty(Optional.ofNullable(null));
+ Mono<Integer> justOrEmptyMono2 = Mono.justOrEmpty(Optional.ofNullable(1));
+ Mono<Integer> justOrEmptyMono3 = Mono.justOrEmpty(1);
+ Mono<Object> justOrEmptyMono4 = Mono.justOrEmpty(null);
+```
+There are many more methods to create Mono like *Mono.fromCallable(), Mono.fromRunnable(), Mono.fromFuture() etc.
+
+### Subsribing publishers
+
+A pulisher can only publish value when some one subscribe to it.When we subscribe to any publishe, we can get 1 of three results 
 1 response
 2 error
 3 complete indication
 
-And a subscriber has 3 methods 
+And a subscriber has 3 methods to handle these results
 
 onNext()
 onError()
 onComplete()
 
-So when we get a response object, onNext method gets triggered. when we get an error OnError() method got triggered.when complete indicator comes onComplete() method get called.
+InNext() method is called when any success response emits from the publisher
+OnError() method is called when any error response emits from the publisher
+onComplete() method get called in the end when there is no more values left to emit. Its a kind of indicator to tell subscriber that subscription is completed.
 
-OnError and onComplete are terminator methods means once they get called, the subscription ends.
+```java
+flux.subscribe(
+onNext(),
+onError(),
+onComplete()
+);
+```
+
+ ***OnError() and onComplete() are terminator methods means once they get called, the subscription ends.***
+ 
 ```java
         Flux<Integer> integerFlux = Flux.just(1,2,3,4);
         integerFlux.subscribe(
-                System.out::println,
+                (x) -> System.out.println(x),
                 error -> System.out.println("Error : " + error),
                 () -> System.out.println("Subscription completed")
         );
 ```
-Here in the subscribe 3 statements are representing these 3 methods : onNext, onError and onComplete
+In the above example onNext() method will be called 4 times and onComplete() once. There is no error thats why onError will not get called.
 
+```java
+Flux<Object> primaryFlux = Flux.just(1, 2, 3, 4, new Exception("Something went wrong"));
+primaryFlux.subscribe(
+ 		(x) -> System.out.println(x),
+                error -> System.out.println("Error : " + error),
+                () -> System.out.println("Subscription completed")
+);
+```
+In this example onNext() will get called 4 times and onError() will get called once. Subscription got cancelled after onError() method so onComplete() will not get called.
+
+So from the above example we can say that only one of onError() and onComplete() can get called in any subscription.
 
 ### intermittent functions 
 
@@ -124,7 +185,9 @@ We can use it in 2 ways : 1st with buffer size and 2nd with time span
 In case of buffer size we can set the exact values which we want to emit at 1 time.
 ```java
 Flux<Integer> integerFlux = Flux.just(1,2,3,4);
-integerFlux.buffer(2).subscribe(x-> System.out.println(x));   // [[1, 2], [3, 4]]
+integerFlux
+	.buffer(2)
+	.subscribe(x-> System.out.println(x));   // [[1, 2], [3, 4]]
 ```
 
 Here we defined buffer equal to 2. So it keeps adding values in buffer and only emit when it reached the buffer size.
@@ -132,7 +195,9 @@ Here we defined buffer equal to 2. So it keeps adding values in buffer and only 
 In case of buffer duration, publisher publishes values in every specified time duration
 ```java
 Flux<Integer> integerFlux = Flux.just(1,2,3,4);
-integerFlux.buffer(2).buffer(Duration.ofMillis(5000)).subscribe(x-> System.out.println(x));  // [1,2,3,4]
+integerFlux
+	.buffer(Duration.ofMillis(5000))
+	.subscribe(x-> System.out.println(x));  // [1,2,3,4]
 ```
 It will emit all the values in 1 go because before 5000 ms it added all the values in buffer. If suppose we are getting these values from some slow database and able to get only 2 values in 5000 ms then it will also publish values like
 ```java
