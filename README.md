@@ -137,9 +137,9 @@ A pulisher can only publish value when some one subscribe to it.When we subscrib
 
 And a subscriber has 3 methods to handle these results
 
-onNext()
-onError()
-onComplete()
+ - onNext()
+ - onError()
+ - onConplete()
 
 InNext() method is called when any success response emits from the publisher
 OnError() method is called when any error response emits from the publisher
@@ -177,10 +177,39 @@ In this example onNext() will get called 4 times and onError() will get called o
 
 So from the above example we can say that only one of onError() and onComplete() can get called in any subscription.
 
-### intermittent functions 
+### Intermittent functions 
+These are the functions which takes the values from the publisher and perform some functions on it before passing it to subscriber.
+
+Lets discuss few of them.
+
+#### 1. map
+This method is used to transform the values from publisher (Flux or mono) before passing it to subscriber
+
+```java
+Flux<Integer> fluxWithError = Flux.range(11, 4)
+	.map(x -> {
+	    if (x < 40) {
+		return x * x;
+	    } else {
+		throw new RuntimeException("Value too large" + x);
+	    }
+	});
+fluxWithError.subscribe(
+	System.out::println,
+	error -> System.out.println("Error : " + error),
+	() -> System.out.println("Subscription completed")
+);
+
+// Output :
+//        121
+//        144
+//        169
+//        196
+//        Subscription completed
+```
 
 #### 1. buffer
-We can use it in 2 ways : 1st with buffer size and 2nd with time span
+We can use it in 2 ways : 1st with buffer size and 2nd with time duration
 
 In case of buffer size we can set the exact values which we want to emit at 1 time.
 ```java
@@ -190,7 +219,7 @@ integerFlux
 	.subscribe(x-> System.out.println(x));   // [[1, 2], [3, 4]]
 ```
 
-Here we defined buffer equal to 2. So it keeps adding values in buffer and only emit when it reached the buffer size.
+Here we defined buffer size as 2. So it keeps adding values in buffer and only emit when it reached the buffer size.
 
 In case of buffer duration, publisher publishes values in every specified time duration
 ```java
@@ -204,7 +233,93 @@ It will emit all the values in 1 go because before 5000 ms it added all the valu
 // [[1, 2], [3, 4]]
 ```
 
-#### blockFirst()
+#### 2. doOnEach()
+This method is used to check all the values of publisher before passing it to the subscriber
+
+```java
+Flux.just(1,2,3,4)
+	.doOnEach(x -> System.out.println(x.get()))
+	.subscribe(x -> System.out.println("subscriber value" + x));
+```
+
+
+Output :
+```java
+1
+subscriber value1
+2
+subscriber value2
+3
+subscriber value3
+4
+subscriber value4
+null              // In case when OnComplete runs the value of x is 0 is printed when we did x.get()
+```
+
+with this method we can check which all method will get called and how many times 
+
+```java
+Flux.just(1,2,3,4)
+	.doOnEach(x -> System.out.println(x.getType()))
+	.subscribe(x -> System.out.println("subscriber value" + x));
+
+```
+
+output  :
+```java
+onNext
+subscriber value1
+onNext
+subscriber value2
+onNext
+subscriber value3
+onNext
+subscriber value4
+onComplete
+```
+
+#### 3. log()
+This method is used for the logging purpose
+
+```java
+Flux.just(1,2,3,4)
+	.log()
+	.subscribe(x -> System.out.println("subscriber value" + x));
+```
+output on console :
+```java
+2020-05-28 20:56:43.767  INFO 10658 --- [or-http-epoll-2] reactor.Flux.Array.2                     : | onSubscribe([Synchronous Fuseable] FluxArray.ArraySubscription)
+2020-05-28 20:56:43.768  INFO 10658 --- [or-http-epoll-2] reactor.Flux.Array.2                     : | request(unbounded)
+2020-05-28 20:56:43.768  INFO 10658 --- [or-http-epoll-2] reactor.Flux.Array.2                     : | onNext(1)
+subscriber value1
+2020-05-28 20:56:43.768  INFO 10658 --- [or-http-epoll-2] reactor.Flux.Array.2                     : | onNext(2)
+subscriber value2
+2020-05-28 20:56:43.768  INFO 10658 --- [or-http-epoll-2] reactor.Flux.Array.2                     : | onNext(3)
+subscriber value3
+2020-05-28 20:56:43.768  INFO 10658 --- [or-http-epoll-2] reactor.Flux.Array.2                     : | onNext(4)
+subscriber value4
+2020-05-28 20:56:43.768  INFO 10658 --- [or-http-epoll-2] reactor.Flux.Array.2                     : | onComplete()
+```
+It will log all the methods called in subscriber with the order in which they get called.
+
+#### 4. delayElement()
+This method is used to delay the emition of value from the publisher for the given time
+```java
+Flux.just(1,2,3,4)
+	.delayElements(Duration.ofMillis(5000))
+	.subscribe(x -> System.out.println("subscriber value" + x));
+```
+It will print 1 value on console 4 times in every 5 sec 
+
+#### 5. subscribeOn()
+By default the whole subscription process works in the main thread which subscribes to the publisher. We can change that using subscribeOn() method
+```java
+Flux.just(1,2,3,4)
+	.subscribeOn(Schedulers.parallel())
+	.subscribe(x -> System.out.println("subscriber value" + x));
+```
+
+#### 6. blockFirst()
 This method subscribes to the flux and returns the first element or null if no value is present. This is usually used for testing
 ```java
 AtomicLong cancelCount = new AtomicLong();
@@ -212,9 +327,11 @@ AtomicLong cancelCount = new AtomicLong();
     .doOnCancel(cancelCount::incrementAndGet)
     .blockFirst();
   assertThat(cancelCount.get()).isEqualTo(1);
+  
 ```
 
-#### blockLast()
+
+#### 7. blockLast()
 This method subscribes to the flux and returns the last element or null if no value is present. This is also usually used for testing
 
 ```java
@@ -224,3 +341,9 @@ AtomicLong cancelCount = new AtomicLong();
     .blockFirst();
   assertThat(cancelCount.get()).isEqualTo(10);
 ```
+
+There are many more methods present in Flux and Mono. For whole list you can refer to 
+
+https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html
+
+https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Mono.html
