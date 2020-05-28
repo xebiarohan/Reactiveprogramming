@@ -18,7 +18,9 @@ We implemented Asyncronous service in the UI but the response of the service is 
 
 Example if we want to show user list on the screen. If the users are less in number then its ok, but if users are in thousands then it decreases the efficiency.
 
-Thats where ***Java reactive programming (RxJava)*** comes into picture. It will return the response in chunks. It will drastrically increases the speed of a service.
+Thats where ***Java reactive programming*** comes into picture. It will return the response in chunks. It will drastrically increases the speed of a service.
+
+There are 2 ways to acheive that in java using Rxjava or Project reactor. Here we will discuss the project reactor.
 
 ### Spring webflux module
 
@@ -36,11 +38,6 @@ lets discuss them 1 by 1
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.reactivex.rxjava2</groupId>
-			<artifactId>rxjava</artifactId>
-			<version>2.2.15</version>
 		</dependency>
 ```
 
@@ -342,7 +339,43 @@ AtomicLong cancelCount = new AtomicLong();
   assertThat(cancelCount.get()).isEqualTo(10);
 ```
 
-There are many more methods present in Flux and Mono. For whole list you can refer to 
+#### 8. timeout()
+Propagate a TimeoutException as soon as no item is emitted within the given Duration from the previous emission (or the subscription for the first item).
+
+```java
+Flux.just(1,2,3,4)
+	.timeout(Duration.ofMillis(1000))
+	.subscribe(x -> System.out.println("subscriber value" + x));
+```
+#### 9. bufferUntilChanged()
+This method add the values into buffer till they are same and emits them when it receives some other value.
+```java
+Flux.just(1,1,2,2,3,4)
+	.bufferUntilChanged()
+	.subscribe(x -> System.out.println("subscriber value" + x));
+```
+output :
+```java
+subscriber value[1, 1]
+subscriber value[2, 2]
+subscriber value[3]
+subscriber value[4]
+```
+
+#### 10. cache
+This method is used to cache the values emited from the publisher. we can fix the count, how many last emited values we want to cache. So when any other subscriber subscribes to it, there wont be any need to go to the publisher.
+```java
+Flux<Integer> flux = Flux.just(1, 1, 2, 2, 3, 4)
+	.cache(2);
+
+flux.subscribe(System.out::println);
+
+flux.subscribe(System.out::println);
+
+```
+This method is useful when we have a publisher with infinite values. And we want to keep track of atlease few previous emitted values as well.
+
+There are many many more methods present in Flux and Mono. For whole list you can refer to 
 
 https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html
 
