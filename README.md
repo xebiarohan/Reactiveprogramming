@@ -1,26 +1,12 @@
-# Reactive Programming
+# Asyncronous programming
 
-### What is Reactive programming ?
-In plain terms reactive programming is about non-blocking applications that are asynchronous and event-driven and require a small number of threads to scale vertically (i.e. within the JVM) rather than horizontally (i.e. through clustering).
+### Why Asyncronous programming
 
-Dont worry if you didn't get  it. keep reading....
+Asynchronous programming provides a non-blocking, event-driven programming model. This programming model leverages the multiple cores in your system to provide parallelization by using multiple CPU cores to execute the tasks, thus increasing the application's throughput.
 
-### Why we need Reactive programming?
+In Java there are many ways to acheive ayncromous programming or reactive programming like using RxJava, project Reactor, vertX etc
 
-Lets first discuss how website loading works. When ever we hit some URL say facebook. It brings the basic page and slowely start adding extra information like images,videos, notifications etc. So what exactly happens.
-
-When we hit the website in the background it hits several asyncronous services or API to get the indivisual information. Based on the response of the API the data loads on screen. Thats why we can see the text first and the images and videos after that on website.
-
-Why are we using asyncronous service here ? 
-Synchronous means that you call a web service (or function) and wait until it returns - all other code execution and user interaction is stopped until the call returns .This increases the loading time of the website and for some time website looks in hung state. So we use asyncronous services. Asynchronous means that you do not halt all other operations while waiting for the web service call to return.It increases the efficiency but still there is scope of improvement.
-
-We implemented Asyncronous service in the UI but the response of the service is still syncronous means all the result comes in 1 response like if we call a getUser service.It will return all the users in 1 response.
-
-Example if we want to show user list on the screen. If the users are less in number then its ok, but if users are in thousands then it decreases the efficiency.
-
-Thats where ***Java reactive programming*** comes into picture. It will return the response in chunks. It will drastrically increases the speed of a service.
-
-There are 2 ways to acheive that in java using Rxjava or Project reactor. Here we will discuss the project reactor.
+Here we will discuss about the project Reactor using spring webflux module.
 
 ### Spring webflux module
 
@@ -35,10 +21,10 @@ lets discuss them 1 by 1
 ### Dependencies
 
 ```java
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
-		</dependency>
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-webflux</artifactId>
+</dependency>
 ```
 
 ## Flux
